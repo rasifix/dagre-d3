@@ -304,7 +304,8 @@ function exit(svgPaths, g) {
 var _ = require("./lodash"),
     addLabel = require("./label/add-label"),
     util = require("./util"),
-    d3 = require("./d3");
+    d3 = require("./d3"),
+    render = require("./render");
 
 module.exports = createNodes;
 
@@ -326,6 +327,13 @@ function createNodes(selection, g, shapes) {
         labelDom = addLabel(labelGroup, node),
         shape = shapes[node.shape],
         bbox = _.pick(labelDom.node().getBBox(), "width", "height");
+
+    // rasifix - subgraph handling - get bounding box after layout of subgraph
+    if (node.graph) {
+      var subgraphGroup = thisGroup.append("g");
+      subgraphGroup.attr("class", "subgraph").call(function(s, g) { render()(s, g); }, node.graph);
+      bbox = _.pick(thisGroup.node().getBBox(), "width", "height");
+    }
 
     node.elem = this;
 
@@ -358,7 +366,7 @@ function createNodes(selection, g, shapes) {
   return svgNodes;
 }
 
-},{"./d3":7,"./label/add-label":18,"./lodash":20,"./util":25}],7:[function(require,module,exports){
+},{"./d3":7,"./label/add-label":18,"./lodash":20,"./render":23,"./util":25}],7:[function(require,module,exports){
 // Stub to get D3 either via NPM or from the global object
 module.exports = window.d3;
 
@@ -787,6 +795,15 @@ function positionNodes(selection, g) {
 
   created.attr("transform", translate);
 
+  // rasifix - added support for subgraphs
+  created.each(function() {
+    var s = d3.select(this).select(".subgraph");
+    if (!s.empty()) {
+      var r = d3.select(this).select("rect");
+      s.attr("transform", "translate(" + r.attr("x") + "," + r.attr("y") + ")");
+    }
+  });
+
   util.applyTransition(selection, g)
     .style("opacity", 1)
     .attr("transform", translate);
@@ -1098,7 +1115,7 @@ function applyTransition(selection, g) {
 }
 
 },{"./lodash":20}],26:[function(require,module,exports){
-module.exports = "0.4.3";
+module.exports = "0.4.4-pre";
 
 },{}]},{},[1])(1)
 });

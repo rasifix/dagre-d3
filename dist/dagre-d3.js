@@ -304,7 +304,8 @@ function exit(svgPaths, g) {
 var _ = require("./lodash"),
     addLabel = require("./label/add-label"),
     util = require("./util"),
-    d3 = require("./d3");
+    d3 = require("./d3"),
+    render = require("./render");
 
 module.exports = createNodes;
 
@@ -326,6 +327,13 @@ function createNodes(selection, g, shapes) {
         labelDom = addLabel(labelGroup, node),
         shape = shapes[node.shape],
         bbox = _.pick(labelDom.node().getBBox(), "width", "height");
+
+    // rasifix - subgraph handling - get bounding box after layout of subgraph
+    if (node.graph) {
+      var subgraphGroup = thisGroup.append("g");
+      subgraphGroup.attr("class", "subgraph").call(function(s, g) { render()(s, g); }, node.graph);
+      bbox = _.pick(thisGroup.node().getBBox(), "width", "height");
+    }
 
     node.elem = this;
 
@@ -358,7 +366,7 @@ function createNodes(selection, g, shapes) {
   return svgNodes;
 }
 
-},{"./d3":7,"./label/add-label":18,"./lodash":20,"./util":25}],7:[function(require,module,exports){
+},{"./d3":7,"./label/add-label":18,"./lodash":20,"./render":23,"./util":25}],7:[function(require,module,exports){
 // Stub to get D3 either via NPM or from the global object
 module.exports = window.d3;
 
@@ -787,6 +795,15 @@ function positionNodes(selection, g) {
 
   created.attr("transform", translate);
 
+  // rasifix - added support for subgraphs
+  created.each(function() {
+    var s = d3.select(this).select(".subgraph");
+    if (!s.empty()) {
+      var r = d3.select(this).select("rect");
+      s.attr("transform", "translate(" + r.attr("x") + "," + r.attr("y") + ")");
+    }
+  });
+
   util.applyTransition(selection, g)
     .style("opacity", 1)
     .attr("transform", translate);
@@ -1098,7 +1115,7 @@ function applyTransition(selection, g) {
 }
 
 },{"./lodash":20}],26:[function(require,module,exports){
-module.exports = "0.4.3";
+module.exports = "0.4.4-pre";
 
 },{}],27:[function(require,module,exports){
 /*
@@ -1414,7 +1431,7 @@ function debugOrdering(g) {
 
 },{"./graphlib":33,"./lodash":36,"./util":55}],33:[function(require,module,exports){
 module.exports=require(9)
-},{"/Users/cpettitt/projects/dagre-d3/lib/graphlib.js":9,"graphlib":57}],34:[function(require,module,exports){
+},{"/Users/sir/wdirs/dagre-d3/lib/graphlib.js":9,"graphlib":57}],34:[function(require,module,exports){
 var _ = require("./lodash"),
     Graph = require("./graphlib").Graph,
     List = require("./data/list");
@@ -1930,7 +1947,7 @@ function canonicalize(attrs) {
 
 },{"./acyclic":28,"./add-border-segments":29,"./coordinate-system":30,"./graphlib":33,"./lodash":36,"./nesting-graph":37,"./normalize":38,"./order":43,"./parent-dummy-chains":48,"./position":50,"./rank":52,"./util":55}],36:[function(require,module,exports){
 module.exports=require(20)
-},{"/Users/cpettitt/projects/dagre-d3/lib/lodash.js":20,"lodash":77}],37:[function(require,module,exports){
+},{"/Users/sir/wdirs/dagre-d3/lib/lodash.js":20,"lodash":77}],37:[function(require,module,exports){
 var _ = require("./lodash"),
     util = require("./util");
 
@@ -5101,7 +5118,7 @@ function read(json) {
 
 },{"./graph":72,"./lodash":75}],75:[function(require,module,exports){
 module.exports=require(20)
-},{"/Users/cpettitt/projects/dagre-d3/lib/lodash.js":20,"lodash":77}],76:[function(require,module,exports){
+},{"/Users/sir/wdirs/dagre-d3/lib/lodash.js":20,"lodash":77}],76:[function(require,module,exports){
 module.exports = '1.0.1';
 
 },{}],77:[function(require,module,exports){
